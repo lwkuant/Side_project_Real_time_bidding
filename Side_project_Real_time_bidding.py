@@ -49,13 +49,16 @@ print(np.sum(df_test['convert'])/len(df_test)*100)
 
 ### EDA on the features
 import os 
-os.chdir()
+os.chdir(r'D:\Project\Side_project_Real_time_bidding')
 def plot_hist_with_class(col, class_col):
-    class_list = np.unique(class_col)
+    class_list = list(np.unique(class_col))
+    color_list = ['#006400', '#CC0000']
     for cat in class_list:
         sns.distplot(col.values[class_col.values == cat],
-                     kde_kws={'alpha':0.9, 'label': cat, 'lw':1}, bins=50)
-        plt.legend()
+                     kde_kws={'alpha':0.9, 'label': cat, 'lw':2}, bins=50,
+                    color = dict(zip(class_list, color_list))[cat],
+                    hist_kws={'alpha':0.8})
+    plt.legend()
            
 fig = plt.figure(figsize=[80, 110])
 plt.suptitle('Histogram for Each Feature by Convert Type', fontsize=25, y=0.94)
