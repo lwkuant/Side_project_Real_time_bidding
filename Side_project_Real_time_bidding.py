@@ -41,6 +41,9 @@ np.random.seed(seed)
 from sklearn.model_selection import train_test_split
 df_tr, df_test = train_test_split(df, test_size=0.2, stratify=df['convert'], random_state=seed)
 
+df_tr.index = range(len(df_tr))
+df_test.index = range(len(df_test))
+
 # Check the proportion after splitting 
 print(np.sum(df_tr['convert'])/len(df_tr)*100)
 print(np.sum(df_test['convert'])/len(df_test)*100)
@@ -48,6 +51,8 @@ print(np.sum(df_test['convert'])/len(df_test)*100)
 
 
 ### EDA on the features
+
+## using visualizations
 import os 
 os.chdir(r'D:\Project\Side_project_Real_time_bidding')
 def plot_hist_with_class(col, class_col):
@@ -55,9 +60,9 @@ def plot_hist_with_class(col, class_col):
     color_list = ['#006400', '#CC0000']
     for cat in class_list:
         sns.distplot(col.values[class_col.values == cat],
-                     kde_kws={'alpha':0.9, 'label': cat, 'lw':2}, bins=50,
+                     kde_kws={'alpha':0.8, 'label': cat, 'lw':2}, bins=50,
                     color = dict(zip(class_list, color_list))[cat],
-                    hist_kws={'alpha':0.8})
+                    hist_kws={'alpha':0.5})
     plt.legend()
            
 fig = plt.figure(figsize=[80, 110])
@@ -66,6 +71,47 @@ for (i, feature) in enumerate(list(df_tr.columns[:-1]), start=1):
     axes = fig.add_subplot(11, 8, i)
     #axes.tick_params(labelsize=10)
     plot_hist_with_class(df_tr[feature], df_tr['convert'])
+plt.savefig('Hist_each_feature_by_convert_type.png')
 
+## using statistic tests
+from scipy.stats import f_oneway
 
+anova_dict = {}
+
+class_list = list(np.unique(df_tr['convert']))
+
+for feature in df_tr.columns[:-1]:
+    li_1 = list(df[feature].values[df['convert'].values == class_list[0]])
+    li_2 = list(df[feature].values[df['convert'].values == class_list[1]])
+    anova_dict[feature] = list(f_oneway(*[li_1, li_2]))
     
+# return the outcome of features by its correlation with the target in descending order     
+print(sorted(anova_dict, key=anova_dict.get, reverse=True))
+
+# return the pairs that have p-value less than 0.05
+good_features_list = [feature for feature in list(anova_dict.keys()) if anova_dict[feature][1]<0.05]
+print(good_features_list)
+print(sorted(good_features_list, key=lambda x: anova_dict[x][0], reverse=True))                      
+
+df_tr_filtered = df_tr.ix[:, good_features_list]
+print(df_tr_filtered.shape)
+
+
+### Feature engineering 
+
+## using PCA
+from sklearn.decomposition import PCA
+pca = PCA(0.9)
+df_tr_pca = pca.fit_transform(df_tr_filtered)
+print(df_tr_pca.shape)
+print(pca.explained_variance_ratio_)
+
+df_tr_pca = pd.concat([pd.DataFrame(df_tr_pca), pd.DataFrame(df_tr['convert'])], axis=1)
+print(df_tr_pca.shape)
+print(df_tr_pca.head())
+print(df_tr_pca['convert'].value_counts()/len(df_tr_pca['convert'])*100)
+
+
+### Modeling 
+from xgboost import XGBClassifier
+
