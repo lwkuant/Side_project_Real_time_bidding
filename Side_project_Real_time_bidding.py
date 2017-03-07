@@ -114,4 +114,19 @@ print(df_tr_pca['convert'].value_counts()/len(df_tr_pca['convert'])*100)
 
 ### Modeling 
 from xgboost import XGBClassifier
+from sklearn.model_selection import cross_val_score
 
+X = df_tr_pca.ix[:, list(df_tr_pca.columns[:-1])].values
+y = df_tr_pca['convert'].values
+
+model = XGBClassifier()
+
+np.random.seed(seed)
+outcome = cross_val_score(model, X, y, scoring='f1', cv=5, n_jobs=-1) # spend roughly 5 minutes
+print(outcome) # 0, as expected
+
+
+### Use the Undersampling to make the dataset more balanced (since we have a lot of data)
+np.random.seed(seed)
+
+def under_samling()
