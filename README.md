@@ -10,4 +10,4 @@ The related information regarding this dataset can be accessed below:
 * [How to deal with unbalanced data](http://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/)
 
 ## Notice
-Link to the work [here](https://github.com/lwkuant/Side_project_FED_interest_rates/blob/master/FED.ipynb)
+Link to the work [here](https://github.com/lwkuant/Side_project_Real_time_bidding/blob/master/RTB.ipynb)
