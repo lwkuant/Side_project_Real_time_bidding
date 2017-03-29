@@ -129,4 +129,59 @@ print(outcome) # 0, as expected
 ### Use the Undersampling to make the dataset more balanced (since we have a lot of data)
 np.random.seed(seed)
 
-def under_samling()
+def under_samling(df, ratio=0.5):
+    
+    index = list(df['convert'][df['convert'] == 0].index)
+    
+    num_sample = (ratio/(1-ratio))*len(df['convert'][df['convert'] == 1])
+    
+    index_random = np.random.choice(index, num_sample, replace=False)
+    
+    df_sample = pd.concat([df.ix[index_random, :], df.ix[(df['convert'] == 1), :]], axis=0)
+    
+    index_random_all = np.random.choice(list(df_sample.index), len(list(df_sample.index)), replace=False)
+    df_sample = df_sample.ix[index_random_all, :]
+
+    return df_sample
+
+df_tr_sample = under_samling(df_tr)
+print(df_tr_sample.head())
+print(df_tr_sample['convert'].value_counts())
+
+# reindex
+df_tr_sample.index = range(len(df_tr_sample))
+print(df_tr_sample.head())
+
+
+### Feature selection
+df_tr_sample_pca = pca.transform(df_tr_sample.ix[:, good_features_list])
+print(df_tr_sample_pca.shape)
+print(pca.explained_variance_ratio_)
+
+df_tr_sample_pca = pd.concat([pd.DataFrame(df_tr_sample_pca), pd.DataFrame(df_tr_sample['convert'])], axis=1)
+print(df_tr_sample_pca.shape)
+print(df_tr_sample_pca.head())
+
+
+### Modeling
+from xgboost import XGBClassifier
+from sklearn.model_selection import cross_val_score
+
+X = df_tr_sample_pca.ix[:, list(df_tr_sample_pca.columns[:-1])].values
+y = df_tr_sample_pca['convert'].values
+
+model = XGBClassifier()
+
+np.random.seed(seed)
+outcome = cross_val_score(model, X, y, scoring='f1', cv=5, n_jobs=-1) # spend seconds
+print(outcome) # somewhat better
+
+## Precision 
+outcome = cross_val_score(model, X, y, scoring='precision', cv=5, n_jobs=-1) # spend seconds
+print(outcome) # somewhat better
+
+## Accuracy
+outcome = cross_val_score(model, X, y, scoring='accuracy', cv=5, n_jobs=-1) # spend seconds
+print(outcome) # somewhat better
+
+
